@@ -41,6 +41,8 @@ jobs:
       - name: Build Windows Installer with electron-builder
         run: |
           npm run build:exe
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload Windows Artifact
         uses: actions/upload-artifact@v4
@@ -70,6 +72,9 @@ jobs:
       - name: Build macOS DMGs with electron-builder
         run: |
           npm run build:mac
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CSC_IDENTITY_AUTO_DISCOVERY: false
 
       - name: Upload DMG Artifacts
         uses: actions/upload-artifact@v4
