@@ -1,0 +1,7 @@
+{
+  "server_url": "https://drive.kaola.vn",
+  "sync_folder": "./KaolaDrive",
+  "token": "",
+  "sync_interval_seconds": 15,
+  "device_name": "Desktop Client"
+}

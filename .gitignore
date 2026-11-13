@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+*.exe
+*.dmg
+*.zip
+*.tar.gz
+
+# Local sync test folder
+KaolaDrive/
+
+# Local credentials & environment
+config.json
+.env
+.env.local
+
+# System files
+.DS_Store
+Thumbs.db
+*.log

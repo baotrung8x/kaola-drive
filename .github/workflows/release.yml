@@ -1,0 +1,190 @@
+name: Release Kaola Drive (Windows & macOS)
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'Nền tảng đóng gói'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - windows
+          - macos
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    name: Build Windows Installer (.exe)
+    if: inputs.target == 'all' || inputs.target == 'windows' || startsWith(github.ref, 'refs/tags/') || inputs.target == ''
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: |
+          npm ci || npm install
+
+      - name: Build Windows Installer with electron-builder
+        run: |
+          npm run build:exe
+
+      - name: Upload Windows Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: KaolaDrive-Windows-Setup
+          path: dist/KaolaDrive_Setup.exe
+          retention-days: 14
+
+  build-macos:
+    name: Build macOS DMGs
+    if: inputs.target == 'all' || inputs.target == 'macos' || startsWith(github.ref, 'refs/tags/') || inputs.target == ''
+    runs-on: macos-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: |
+          npm ci || npm install
+
+      - name: Build macOS DMGs with electron-builder
+        run: |
+          npm run build:mac
+
+      - name: Upload DMG Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: KaolaDrive-macOS-DMG
+          path: dist/*.dmg
+          retention-days: 14
+
+  publish-and-sync:
+    name: Publish GitHub Release & Sync to WordPress
+    needs: [build-windows, build-macos]
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Create asset output directory
+        run: mkdir -p release_assets
+
+      - name: Download Windows Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: KaolaDrive-Windows-Setup
+          path: release_assets/
+
+      - name: Download macOS Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: KaolaDrive-macOS-DMG
+          path: release_assets/
+
+      - name: Parse Version and Tag
+        id: vars
+        run: |
+          TAG_NAME="${GITHUB_REF#refs/tags/}"
+          VERSION="${TAG_NAME#v}"
+          echo "tag=$TAG_NAME" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Release Tag: $TAG_NAME, Clean Version: $VERSION"
+          ls -la release_assets/
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.vars.outputs.tag }}
+          name: Kaola Drive ${{ steps.vars.outputs.tag }}
+          generate_release_notes: true
+          files: release_assets/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Trigger Webhook to Kaola Website (WordPress)
+        env:
+          KAOLA_RELEASE_SECRET: ${{ secrets.KAOLA_RELEASE_SECRET }}
+          KAOLA_WEBHOOK_URL: ${{ secrets.KAOLA_WEBHOOK_URL }}
+          REPO_NAME: ${{ github.repository }}
+          TAG_NAME: ${{ steps.vars.outputs.tag }}
+          VERSION: ${{ steps.vars.outputs.version }}
+        run: |
+          WEBHOOK_URL="${KAOLA_WEBHOOK_URL:-https://kaola.vn/wp-json/kaola-rm/v1/webhook/release}"
+          
+          if [ -z "$KAOLA_RELEASE_SECRET" ]; then
+            echo "[WARNING] KAOLA_RELEASE_SECRET secret is not configured in GitHub Repository Settings. Skipping webhook notification."
+            exit 0
+          fi
+          
+          echo "Sending release webhook to $WEBHOOK_URL for version $VERSION..."
+          
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "$WEBHOOK_URL" \
+            -H "Content-Type: application/json" \
+            -H "X-Kaola-Secret: $KAOLA_RELEASE_SECRET" \
+            -d @- << EOF
+          {
+            "slug": "kaola-drive",
+            "version": "${VERSION}",
+            "title": "Kaola Drive ${TAG_NAME}",
+            "channel": "stable",
+            "changelog": "Bản phát hành tự động ${TAG_NAME} đa nền tảng (Windows x64, macOS).",
+            "files": [
+              {
+                "platform": "windows_x64",
+                "file_label": "Window",
+                "file_name": "KaolaDrive_Setup.exe",
+                "file_source": "external",
+                "file_url": "https://github.com/${REPO_NAME}/releases/download/${TAG_NAME}/KaolaDrive_Setup.exe"
+              },
+              {
+                "platform": "mac_arm64",
+                "file_label": "macOS",
+                "file_name": "KaolaDrive_macOS_arm64.dmg",
+                "file_source": "external",
+                "file_url": "https://github.com/${REPO_NAME}/releases/download/${TAG_NAME}/KaolaDrive_macOS_arm64.dmg"
+              },
+              {
+                "platform": "mac_intel",
+                "file_label": "macOS Intel x64",
+                "file_name": "KaolaDrive_macOS_x64.dmg",
+                "file_source": "external",
+                "file_url": "https://github.com/${REPO_NAME}/releases/download/${TAG_NAME}/KaolaDrive_macOS_x64.dmg"
+              }
+            ]
+          }
+          EOF
+          )
+          
+          HTTP_BODY=$(echo "$RESPONSE" | sed '$d')
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          
+          echo "Webhook response status: $HTTP_CODE"
+          echo "Webhook response body: $HTTP_BODY"
+          
+          if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
+            echo "[SUCCESS] Release synchronized to Kaola website successfully!"
+          else
+            echo "[ERROR] Failed to synchronize release to website (HTTP $HTTP_CODE)."
+          fi

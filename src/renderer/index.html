@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kaola Drive Desktop</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Title Bar -->
+        <header class="title-bar">
+            <div class="brand">
+                <img src="../../assets/icon_512.png" alt="Logo" class="app-logo" onerror="this.src='../../assets/icon.png'">
+                <span class="app-title">Kaola Drive</span>
+            </div>
+            <div class="window-controls">
+                <button id="btn-minimize" class="win-btn" title="Thu nhỏ">&#x2014;</button>
+                <button id="btn-close" class="win-btn win-close" title="Đóng về khay hệ thống">&times;</button>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- VIEW: LOGIN -->
+            <section id="view-login" class="view hidden">
+                <div class="login-header">
+                    <div class="logo-circle">
+                        <img src="../../assets/icon_512.png" alt="Kaola Drive">
+                    </div>
+                    <h2>Đăng nhập Kaola Drive</h2>
+                    <p class="subtitle">Đồng bộ tệp tin hai chiều tự động cho máy tính</p>
+                </div>
+
+                <form id="form-login" class="login-form">
+                    <div id="login-error" class="alert alert-error hidden"></div>
+
+                    <div class="form-group">
+                        <label for="input-email">Email tài khoản</label>
+                        <input type="email" id="input-email" required placeholder="admin@kaola.vn" autofocus>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="input-password">Mật khẩu</label>
+                        <input type="password" id="input-password" required placeholder="••••••••">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Thư mục đồng bộ trên máy tính</label>
+                        <div class="input-with-button">
+                            <input type="text" id="input-folder" readonly placeholder="Chọn thư mục...">
+                            <button type="button" id="btn-browse-folder" class="btn btn-secondary">Duyệt...</button>
+                        </div>
+                    </div>
+
+                    <button type="submit" id="btn-submit-login" class="btn btn-primary btn-block">
+                        <span class="btn-text">Đăng nhập & Bắt đầu đồng bộ</span>
+                        <span class="spinner hidden"></span>
+                    </button>
+                </form>
+            </section>
+
+            <!-- VIEW: DASHBOARD -->
+            <section id="view-dashboard" class="view">
+                <!-- Update Alert Banner -->
+                <div id="banner-update-alert" class="update-banner hidden">
+                    <div class="update-banner-icon">🚀</div>
+                    <div class="update-banner-content">
+                        <div class="update-banner-title">Có bản cập nhật mới: <strong id="banner-update-version">v1.0.1</strong></div>
+                        <div class="update-banner-sub">Nâng cấp để nhận tính năng và sửa lỗi mới nhất.</div>
+                    </div>
+                    <div class="update-banner-actions">
+                        <button id="btn-banner-view-update" class="btn btn-update-sm" type="button">Xem ngay</button>
+                        <button id="btn-banner-dismiss-update" class="btn-banner-close" type="button" title="Bỏ qua">&times;</button>
+                    </div>
+                </div>
+
+                <!-- Status Banner -->
+                <div class="status-card" id="status-card">
+                    <div class="status-icon-wrap">
+                        <div id="status-icon" class="status-dot idle"></div>
+                    </div>
+                    <div class="status-text">
+                        <div id="status-title" class="status-title">Đang kết nối...</div>
+                        <div id="status-desc" class="status-desc">Khởi tạo tiến trình</div>
+                    </div>
+                    <div class="status-badge" id="status-badge">Đã bật</div>
+                </div>
+
+                <!-- User & Storage Info -->
+                <div class="card info-card">
+                    <div class="user-row">
+                        <div class="user-avatar" id="user-avatar">KD</div>
+                        <div class="user-meta">
+                            <div class="user-name" id="user-name">Đang tải...</div>
+                            <div class="user-company" id="user-company">...</div>
+                        </div>
+                    </div>
+
+                    <!-- Quota Progress Bar -->
+                    <div class="storage-section">
+                        <div class="storage-labels">
+                            <span class="storage-title">Dung lượng Cloud</span>
+                            <span class="storage-numbers" id="storage-numbers">0 MB / 0 GB</span>
+                        </div>
+                        <div class="progress-bar-bg">
+                            <div class="progress-bar-fill" id="storage-fill" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Action Buttons Grid -->
+                <div class="action-grid">
+                    <button id="btn-open-folder" class="action-btn" title="Mở Ổ đĩa hoặc Thư mục trên máy tính">
+                        <span class="action-icon" id="icon-open-folder">💿</span>
+                        <span class="action-label" id="lbl-open-folder">Mở Ổ đĩa K:</span>
+                    </button>
+
+                    <button id="btn-open-web" class="action-btn" title="Mở Kaola Drive trên trình duyệt Web">
+                        <span class="action-icon">🌐</span>
+                        <span class="action-label">Mở Web</span>
+                    </button>
+
+                    <button id="btn-sync-now" class="action-btn" title="Kích hoạt đồng bộ ngay">
+                        <span class="action-icon" id="icon-sync-now">🔄</span>
+                        <span class="action-label">Đồng bộ ngay</span>
+                    </button>
+
+                    <button id="btn-open-settings" class="action-btn action-btn-rel" title="Cài đặt">
+                        <span class="action-icon">⚙️</span>
+                        <span class="action-label">Cài đặt</span>
+                        <span id="badge-settings-update" class="settings-update-dot hidden" title="Có bản cập nhật mới"></span>
+                    </button>
+                </div>
+
+                <!-- Tabs Navigation -->
+                <div class="content-tabs">
+                    <button id="tab-btn-activity" class="tab-btn active">
+                        <span>⚡ Hoạt động</span>
+                    </button>
+                    <button id="tab-btn-files" class="tab-btn">
+                        <span>📁 Quản lý tệp (Online/Offline)</span>
+                        <span id="badge-files-count" class="tab-count-badge">0</span>
+                    </button>
+                </div>
+
+                <!-- Tab 1: Recent Activities -->
+                <div id="tab-content-activity" class="card tab-pane">
+                    <div class="activity-header">
+                        <h3>Hoạt động gần đây</h3>
+                        <span id="last-sync-time" class="last-sync">Vừa xong</span>
+                    </div>
+                    <div id="activity-list" class="activity-list">
+                        <div class="empty-activity">
+                            <span>Chưa có tệp nào được đồng bộ gần đây</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 2: Files On-Demand Manager (Online vs Offline) -->
+                <div id="tab-content-files" class="card tab-pane hidden">
+                    <div class="files-header">
+                        <div class="files-summary">
+                            <span id="summary-total-files">0 tệp</span> •
+                            <span id="summary-online-files" class="text-online">☁️ 0 Online</span> •
+                            <span id="summary-offline-files" class="text-offline">🟢 0 Offline</span>
+                        </div>
+                        <div class="files-filter-group">
+                            <button class="filter-btn active" data-filter="all">Tất cả</button>
+                            <button class="filter-btn" data-filter="online">☁️ Online</button>
+                            <button class="filter-btn" data-filter="offline">🟢 Offline</button>
+                        </div>
+                    </div>
+
+                    <!-- Search Box -->
+                    <div class="files-search-box">
+                        <input type="text" id="input-files-search" placeholder="🔍 Tìm kiếm tệp...">
+                    </div>
+
+                    <!-- Files List -->
+                    <div id="files-list" class="files-list">
+                        <div class="empty-activity">
+                            <span>Đang tải danh sách tệp...</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW: SETTINGS MODAL/OVERLAY -->
+            <div id="modal-settings" class="modal-overlay hidden">
+                <div class="modal-card">
+                    <div class="modal-header">
+                        <h3>Cài đặt Kaola Drive</h3>
+                        <button id="btn-close-settings" class="modal-close">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="setting-item">
+                            <label>Thư mục lưu trữ cục bộ:</label>
+                            <div class="setting-value" id="settings-folder-path">...</div>
+                        </div>
+
+                        <div class="setting-item">
+                            <label>Chế độ đồng bộ dữ liệu:</label>
+                            <div class="sync-mode-selector">
+                                <label class="sync-mode-card">
+                                    <input type="radio" name="sync-mode-opt" value="offline" id="opt-mode-offline">
+                                    <div class="mode-info">
+                                        <div class="mode-title">💾 Luôn tải về máy (Full Offline)</div>
+                                        <div class="mode-desc">Tải mọi tệp về máy tính để dùng ngoại tuyến không cần mạng.</div>
+                                    </div>
+                                </label>
+                                <label class="sync-mode-card">
+                                    <input type="radio" name="sync-mode-opt" value="online_only" id="opt-mode-online">
+                                    <div class="mode-info">
+                                        <div class="mode-title">☁️ Tiết kiệm dung lượng (Files On-Demand)</div>
+                                        <div class="mode-desc">Chỉ tải khi mở hoặc chọn tải về. Tệp chỉ lưu trên Cloud (0 B trên máy).</div>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="setting-toggle">
+                            <input type="checkbox" id="chk-virtual-drive">
+                            <label for="chk-virtual-drive">Tạo Ổ đĩa Kaola Drive (K:) trong This PC (như Google Drive / OneDrive)</label>
+                        </div>
+
+                        <div class="setting-toggle">
+                            <input type="checkbox" id="chk-autostart">
+                            <label for="chk-autostart">Tự động khởi động cùng Windows khi bật máy</label>
+                        </div>
+
+                        <!-- Version & Update Section -->
+                        <div class="setting-item version-section">
+                            <div class="version-header">
+                                <label>Thông tin phiên bản:</label>
+                                <button id="btn-check-updates-manual" class="btn btn-secondary btn-sm" type="button" title="Kiểm tra bản cập nhật mới từ máy chủ">
+                                    <span id="text-check-updates">🔄 Kiểm tra bản mới</span>
+                                    <span id="spinner-check-updates" class="spinner-sm hidden"></span>
+                                </button>
+                            </div>
+                            <div class="version-status-row">
+                                <span class="cur-ver-label">Kaola Drive Desktop <strong id="lbl-app-version">v1.0.0</strong></span>
+                                <span id="lbl-version-check-status" class="ver-check-status">Phiên bản mới nhất</span>
+                            </div>
+
+                            <!-- Card chi tiết cập nhật khi có bản mới -->
+                            <div id="card-update-details" class="update-details-card hidden">
+                                <div class="update-card-badge-row">
+                                    <span class="update-card-badge">BẢN CẬP NHẬT MỚI</span>
+                                    <span class="update-card-ver" id="update-new-version">v1.0.1</span>
+                                </div>
+                                <p id="update-release-notes" class="update-card-notes">Bản nâng cấp ổn định và tối ưu hóa hệ thống.</p>
+                                <div class="update-card-cta">
+                                    <button id="btn-download-update" class="btn btn-primary btn-block" type="button">
+                                        📥 Tải bản cập nhật ngay
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="setting-actions">
+                            <button id="btn-logout" class="btn btn-danger btn-block">Đăng xuất tài khoản</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

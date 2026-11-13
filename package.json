@@ -1,0 +1,71 @@
+{
+  "name": "kaola-drive-desktop",
+  "version": "1.0.0",
+  "description": "Kaola Drive Desktop Sync Client - Đồng bộ tệp hai chiều tự động giữa máy tính và Kaola Drive Cloud",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron .",
+    "cli": "node index.js",
+    "login": "node scripts/login.js",
+    "shortcut": "node scripts/create-shortcut.js",
+    "build:exe": "electron-builder --win --x64",
+    "build:mac": "electron-builder --mac"
+  },
+  "build": {
+    "appId": "com.kaola.drive",
+    "productName": "Kaola Drive",
+    "compression": "store",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "icon": "assets/icon.ico",
+      "artifactName": "KaolaDrive_Setup.${ext}"
+    },
+    "mac": {
+      "target": [
+        "dmg"
+      ],
+      "category": "public.app-category.productivity",
+      "icon": "assets/icon.png",
+      "artifactName": "KaolaDrive_macOS_${arch}.${ext}"
+    },
+    "nsis": {
+      "installerIcon": "assets/icon.ico",
+      "uninstallerIcon": "assets/icon.ico",
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Kaola Drive"
+    },
+    "files": [
+      "src/**/*",
+      "engine/**/*",
+      "assets/**/*",
+      "package.json"
+    ],
+    "asar": true
+  },
+  "keywords": [
+    "kaola-drive",
+    "cloud-storage",
+    "sync-engine",
+    "desktop-app"
+  ],
+  "author": "Kaola Ecosystem",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.7.0",
+    "chokidar": "^3.6.0",
+    "form-data": "^4.0.0"
+  },
+  "devDependencies": {
+    "electron": "^44.9.0",
+    "electron-builder": "^26.15.3",
+    "png-to-ico": "^3.0.2"
+  }
+}
